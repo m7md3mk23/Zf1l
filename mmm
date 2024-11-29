@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معلومات اللعبة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('https://modo3.com/thumbs/fit630x300/7192/1652709801/%D8%A3%D8%AC%D9%85%D9%84_%D8%B9%D9%84%D9%85_%D9%81%D9%8A_%D8%A7%D9%84%D8%B9%D8%A7%D9%84%D9%85.jpg');
+            background-size: cover;
+            background-position: center;
+            flex-direction: column;
+        }
+
+        #questionSection, #resultSection, #languageSelector {
+            display: none;
+        }
+
+        #startSection {
+            text-align: center;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            margin-top: 10px;
+            width: 300px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        #timer {
+            font-size: 100px;
+            font-weight: bold;
+            color: #ff0000;
+            position: absolute;
+            top: 10%;
+            width: 100%;
+            text-align: center;
+            margin: 0;
+        }
+
+        #questionNumber {
+            font-size: 80px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .questionContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #questionImage {
+            width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        #settingsButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #fff;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        #languageSelector {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background-color: #fff;
+            padding: 10px;
+            display: none;
+        }
+
+        #languageSelector select {
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- زر الإعدادات كأيقونة -->
+    <button id="settingsButton" onclick="toggleLanguageSelector()">
+        <i class="fas fa-cog"></i> <!-- أيقونة الترس -->
+    </button>
+
+    <div id="languageSelector">
+        <select onchange="changeLanguage(event)">
+            <option value="ar">العربية</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+        </select>
+    </div>
+
+    <div id="startSection">
+        <button onclick="startGame()">اضغط للعب</button>
+    </div>
+
+    <div id="questionSection">
+        <div class="questionContainer">
+            <h1 id="questionNumber"></h1>
+            <img id="questionImage" src="" alt="صورة الدولة">
+            <input type="text" id="answer" placeholder="أدخل إجابتك هنا" onkeydown="checkEnter(event)">
+            <button onclick="checkAnswer()">إرسال الإجابة</button>
+        </div>
+    </div>
+
+    <div id="resultSection">
+        <h2 id="resultMessage"></h2>
+        <button onclick="restartGame()">إعادة اللعب</button>
+    </div>
+
+    <p id="timer"></p>
+
+    <script>
+        const questions = [
+            {
+                question: "ماهي هذه الدولة؟",
+                answer: "امريكا",
+                image: "https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg",
+                en_question: "What is this country?",
+                en_answer: "USA",
+                es_question: "¿Qué país es este?",
+                es_answer: "EE.UU."
+            },
+            {
+                question: "ماهي هذه الدولة؟",
+                answer: "مصر",
+                image: "https://upload.wikimedia.org/wikipedia/commons/f/fe/Flag_of_Egypt.svg",
+                en_question: "What is this country?",
+                en_answer: "Egypt",
+                es_question: "¿Qué país es este?",
+                es_answer: "Egipto"
+            },
+            {
+                question: "ماهي هذه الدولة؟",
+                answer: "المغرب",
+                image: "https://upload.wikimedia.org/wikipedia/commons/2/2c/Flag_of_Morocco.svg",
+                en_question: "What is this country?",
+                en_answer: "Morocco",
+                es_question: "¿Qué país es este?",
+                es_answer: "Marruecos"
+            },
+            {
+                question: "ماهي هذه الدولة؟",
+                answer: "كندا",
+                image: "https://upload.wikimedia.org/wikipedia/commons/c/cf/Flag_of_Canada.svg",
+                en_question: "What is this country?",
+                en_answer: "Canada",
+                es_question: "¿Qué país es este?",
+                es_answer: "Canadá"
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let timer;
+        let timeLeft = 15;
+        let currentLanguage = 'ar';
+
+        function toggleLanguageSelector() {
+            const selector = document.getElementById('languageSelector');
+            selector.style.display = (selector.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function changeLanguage(event) {
+            currentLanguage = event.target.value;
+            showQuestion();
+        }
+
+        function startGame() {
+            document.getElementById('startSection').style.display = 'none';
+            document.getElementById('questionSection').style.display = 'block';
+            showQuestion();
+            startTimer();
+        }
+
+        function showQuestion() {
+            let currentQuestion = questions[currentQuestionIndex];
+            if (currentLanguage === 'ar') {
+                document.getElementById('questionNumber').innerText = "السؤال رقم " + (currentQuestionIndex + 1);
+                document.getElementById('questionImage').src = currentQuestion.image;
+            } else if (currentLanguage === 'en') {
+                document.getElementById('questionNumber').innerText = "Question " + (currentQuestionIndex + 1);
+                document.getElementById('questionImage').src = currentQuestion.image;
+            } else if (currentLanguage === 'es') {
+                document.getElementById('questionNumber').innerText = "Pregunta " + (currentQuestionIndex + 1);
+                document.getElementById('questionImage').src = currentQuestion.image;
+            }
+
+            document.getElementById('answer').value = '';
+        }
+
+        function startTimer() {
+            timeLeft = 15;
+            document.getElementById('timer').innerText = timeLeft;
+            document.getElementById('timer').style.display = 'block';
+            timer = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            document.getElementById('timer').innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                handleLoss();
+            }
+        }
+
+        function checkAnswer() {
+            clearInterval(timer);
+
+            let userAnswer = document.getElementById('answer').value.toLowerCase();
+            let correctAnswer = questions[currentQuestionIndex].answer.toLowerCase();
+
+            if (userAnswer === correctAnswer) {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    showQuestion();
+                    startTimer();
+                } else {
+                    document.getElementById('questionSection').style.display = 'none';
+                    document.getElementById('resultMessage').innerText = "مبروك! لقد فزت!";
+                    document.getElementById('resultSection').style.display = 'block';
+                    document.getElementById('timer').style.display = 'none';
+                }
+            } else {
+                handleLoss();
+            }
+        }
+
+        function handleLoss() {
+            document.getElementById('questionSection').style.display = 'none';
+            document.getElementById('resultMessage').innerText = "خسرت! الإجابة خاطئة أو انتهى الوقت.";
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('timer').style.display = 'none';
+        }
+
+        function checkEnter(event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        }
+
+        function restartGame() {
+            currentQuestionIndex = 0;
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('startSection').style.display = 'block';
+            document.getElementById('timer').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
